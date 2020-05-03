@@ -6,7 +6,6 @@ Created on Wed Apr 22 09:50:11 2020
 """
 
 import pandas as pd
-# %matplotlib inline
 import pickle
 import warnings
 warnings.filterwarnings('ignore')

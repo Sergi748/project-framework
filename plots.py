@@ -4,10 +4,10 @@ Created on Wed Apr 22 09:48:52 2020
 
 @author: sc250091
 """
-import pandas as pd
+# import pandas as pd
 import matplotlib.pyplot as plt
 # %matplotlib inline
-import seaborn as sns
+# import seaborn as sns
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
@@ -57,21 +57,7 @@ class createPlots():
         plt.savefig(path + '/' + nameModel + '/output/metricas/Lift_' + name + '.png')
         plt.close(fig)
         plt.show()
-    
-    
-    def plotROC_AUC_old(self, df, target, name, path, nameModel):
-        fpr24ghz, tpr24ghz, thresholds = roc_curve(df[target], df['score'])
-        fig = plt.figure(figsize=(5, 5))
-        plt.plot([0, 1], [0, 1])
-        plt.plot(fpr24ghz, tpr24ghz);
-        plt.title('AUC-ROC')
-        plt.xlabel('FPR', color='#1C2833')
-        plt.ylabel('TPR', color='#1C2833')
-        plt.grid()
-        plt.text(0.61, 0.01, str('AUC-ROC = ') + str(round(100*(roc_auc_score(df[target], df['score'])), 3)) + str('%'))
-        plt.savefig(path + '/' + nameModel + '/output/metricas/ROC_AUC_' + name + '.png')
-        plt.close(fig)
-        plt.show()
+           
         
     def plotROC_AUC_train_test(self, dfTrain, dfTest, target, name, path, nameModel):
         fpr24ghz, tpr24ghz, thresholds = roc_curve(dfTrain[target], dfTrain['score'])
@@ -92,6 +78,22 @@ class createPlots():
         plt.savefig(path + '/' + nameModel + '/output/metricas/ROC_AUC_train_test_' + name + '.png')
         plt.close(fig)
         plt.show()
+        
+        
+    def plotROC_AUC_pred(self, df, target, name, path, nameModel):
+        fpr24ghz, tpr24ghz, thresholds = roc_curve(df[target], df['score'])
+        fig = plt.figure(figsize=(5, 5))
+        plt.plot([0, 1], [0, 1])
+        plt.plot(fpr24ghz, tpr24ghz);
+        plt.title('AUC-ROC')
+        plt.xlabel('FPR', color='#1C2833')
+        plt.ylabel('TPR', color='#1C2833')
+        plt.grid()
+        plt.text(0.61, 0.01, str('AUC-ROC = ') + str(round(100*(roc_auc_score(df[target], df['score'])), 3)) + str('%'))
+        plt.savefig(path + '/' + nameModel + '/output/metricas/ROC_AUC_predict_' + name + '.png')
+        plt.close(fig)
+        plt.show()
+
         
     def plotFeaturesSelect(self, dfVars, path, nameModel, name):
         plt.rcdefaults()

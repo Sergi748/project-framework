@@ -8,7 +8,6 @@ import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
-
 class tratamiento():
 
     '''Clase para realizar el tratamiento del tablon'''
