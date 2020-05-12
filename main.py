@@ -27,7 +27,7 @@ class main():
         self.dfPred = pd.DataFrame()
         self.diccionario = pd.DataFrame()
         self.path = ""
-        self.nameModel = ""
+        self.nameProject = ""
         self.modelToPred = ""
         self.nameSavePred = ""
         self.Id = ""
@@ -42,23 +42,24 @@ class main():
         self.parametrosGradBoosting = {}
         self.parametrosvotClass = {}
         self.parametrosxgb = {}
+        self.parametroslgb = {}
 
     def createDirectory(self):
         listDir = ['output', 'governance']
         for i in listDir:
-            if os.path.exists(self.path + '/' + self.nameModel + '/' + i) == False:
-                os.makedirs(self.path + '/' + self.nameModel + '/' + i)
+            if os.path.exists(self.path + '/' + self.nameProject + '/' + i) == False:
+                os.makedirs(self.path + '/' + self.nameProject + '/' + i)
         
         listDirOut = ['modelos', 'metricas', 'predicciones']
         for i in listDirOut:
-            if os.path.exists(self.path + '/' + self.nameModel + '/output/' + i) == False:
-                os.makedirs(self.path + '/' + self.nameModel + '/output/' + i)
+            if os.path.exists(self.path + '/' + self.nameProject + '/output/' + i) == False:
+                os.makedirs(self.path + '/' + self.nameProject + '/output/' + i)
     
     def inputNAs(self):
-        self.df = tratamiento().inputNA(self.df, self.path, self.nameModel, self.diccionario)
+        self.df = tratamiento().inputNA(self.df, self.path, self.nameProject, self.diccionario)
         
     def dummies(self):
-        self.df = tratamiento().createDummies(self.df, self.target, self.path, self.nameModel)    
+        self.df = tratamiento().createDummies(self.df, self.target, self.path, self.nameProject)    
                           
     def SelectKBest(self):
         self.df = SelectVars(self.df, self.target, self.nVars).SelectKBest()
@@ -70,23 +71,26 @@ class main():
         self.df = SelectVars(self.df, self.target, self.nVars).SelectVariance()
           
     def modelLogisticRegression(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameModel, self.cv, self.score_metric).modelLogisticRegression(self.parametrosLogReg)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLogisticRegression(self.parametrosLogReg)
     
     def modelRandomForest(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameModel, self.cv, self.score_metric).modelRandomForest(self.parametrosRandomForest)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelRandomForest(self.parametrosRandomForest)
 
     def modelGradientBoostingClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameModel, self.cv, self.score_metric).modelGradientBoostingClassifier(self.parametrosGradBoosting)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelGradientBoostingClassifier(self.parametrosGradBoosting)
 
     def modelVotingClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameModel, self.cv, self.score_metric).modelVotingClassifier(self.estimatorsVotClass, self.parametrosvotClass)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelVotingClassifier(self.estimatorsVotClass, self.parametrosvotClass)
 
     def modelXGBClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameModel, self.cv, self.score_metric).modelXGBClassifier(self.parametrosxgb)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelXGBClassifier(self.parametrosxgb)
 
+    def modelLightGBMClassifier(self):
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLightGBMClassifier(self.parametroslgb)
+    
     def predict(self):
-        predictions().predict(self.dfPred, self.path, self.nameModel, self.modelToPred, self.nameSavePred, self.target, self.Id)
+        predictions().predict(self.dfPred, self.path, self.nameProject, self.modelToPred, self.nameSavePred, self.target, self.Id)
 
     def plotPredict(self):
-        predictions().plotPredict(self.dfPred, self.target, self.nameSavePred, self.path, self.nameModel)
+        predictions().plotPredict(self.dfPred, self.target, self.nameSavePred, self.path, self.nameProject)
         

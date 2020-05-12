@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 class tratamiento():
 
     '''Clase para realizar el tratamiento del tablon'''
-    def inputNA(self, df, path, nameModel, diccionario=""):
+    def inputNA(self, df, path, nameProject, diccionario=""):
         
         df1 = df.copy()
         '''Se puede entregar un dataframe (['variable', 'valor']) con el valor de la imputacion para cada variable o no'''
@@ -35,18 +35,18 @@ class tratamiento():
                 else:
                     dfSummaryImput.loc[i,'Input'] = naNumeric
                     dfSummaryImput.loc[i,'Input'] = 'Numerical'
-            dfSummaryImput.to_csv(path + '/' + nameModel + '/governance/diccionarioInputNAs.csv', sep=';', index=False)
+            dfSummaryImput.to_csv(path + '/' + nameProject + '/governance/diccionarioInputNAs.csv', sep=';', index=False)
             
         else:
             dfDicc = diccionario
-            dfDicc .to_csv(path + '/' + nameModel + '/governance/diccionarioInputNAs.csv', sep=';', index=False)
+            dfDicc.to_csv(path + '/' + nameProject + '/governance/diccionarioInputNAs.csv', sep=';', index=False)
             for i in df1.columns:
                 if i in dfDicc.Variable.tolist():
                     value = dfDicc.loc[dfDicc.Variable == i, 'Input'].item()
                     df1[i] = df1[i].fillna(value)                          
         return df1
     
-    def createDummies(self, df, target, path, nameModel): 
+    def createDummies(self, df, target, path, nameProject): 
         
         df1 = df.copy()
         dfSummaryDummies = pd.DataFrame(columns=['Variable', 'Dummies'])
@@ -56,17 +56,17 @@ class tratamiento():
                 dfSummaryDummies.loc[i, 'Variable'] = variables[i]
                 dfSummaryDummies.loc[i, 'Dummies'] = df1[variables[i]].unique().tolist() 
         
-        dfSummaryDummies.reset_index(drop=True).to_csv(path + '/' + nameModel + '/governance/diccionarioDummies.csv', sep=';', index=False)
+        dfSummaryDummies.reset_index(drop=True).to_csv(path + '/' + nameProject + '/governance/diccionarioDummies.csv', sep=';', index=False)
 
         for var in df1.columns:
             if (df1[var].dtype == 'object') & (var != target): 
                 df1 = pd.get_dummies(df1, columns=[var], dtype=int)
         return df1
     
-    def inputNAPred(self, df, path, nameModel):
+    def inputNAPred(self, df, path, nameProject):
         
         df1 = df.copy()
-        dfDicc = pd.read_csv(path + '/' + nameModel + '/governance/diccionarioInputNAs.csv', sep=';')
+        dfDicc = pd.read_csv(path + '/' + nameProject + '/governance/diccionarioInputNAs.csv', sep=';')
         for i in df1.columns:
             if (i in dfDicc.Variable.tolist()) & (df1[i].isnull().sum() > 0):
                 typeValue = dfDicc.loc[dfDicc.Variable == i, 'Type'].item()

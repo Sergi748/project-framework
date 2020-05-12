@@ -32,7 +32,7 @@ class createPlots():
         return df
 
     # Funcion para plot lift
-    def plotLift_old(self, df, pct, name, path, nameModel):
+    def plotLift_old(self, df, pct, name, path, nameProject):
         corte_izq = 1
         corte_derecho = int(df.shape[0]*pct)
         fig = plt.figure(figsize=(8, 7))
@@ -40,12 +40,12 @@ class createPlots():
         plt.scatter(df['poblacion_tpu'][(corte_izq - 1):(corte_derecho + 1)], df['lift'][(corte_izq - 1):(corte_derecho + 1)])
         plt.xlabel('poblacion')
         plt.ylabel('lift')
-        plt.savefig(path + '/' + nameModel + '/output/metricas/Lift_' + name + '_' + str(int(pct * 100)) + '.png')
+        plt.savefig(path + '/' + nameProject + '/output/metricas/Lift_' + name + '_' + str(int(pct * 100)) + '.png')
         plt.close(fig)
         plt.show()
             
     # Funcion para plot lift
-    def plotLift(self, df, name, path, nameModel):
+    def plotLift(self, df, name, path, nameProject):
         corte_izq = 1
         corte_derecho = int(df.shape[0]*1)
         fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -54,12 +54,12 @@ class createPlots():
         corte_derecho = int(df.shape[0]*0.1)
         ax2.scatter(df['poblacion_tpu'][(corte_izq - 1):(corte_derecho + 1)], df['lift'][(corte_izq - 1):(corte_derecho + 1)])
         ax2.title.set_text('Lift 10 % poblacion')
-        plt.savefig(path + '/' + nameModel + '/output/metricas/Lift_' + name + '.png')
+        plt.savefig(path + '/' + nameProject + '/output/metricas/Lift_' + name + '.png')
         plt.close(fig)
         plt.show()
            
         
-    def plotROC_AUC_train_test(self, dfTrain, dfTest, target, name, path, nameModel):
+    def plotROC_AUC_train_test(self, dfTrain, dfTest, target, name, path, nameProject):
         fpr24ghz, tpr24ghz, thresholds = roc_curve(dfTrain[target], dfTrain['score'])
         fig, (ax1, ax2) = plt.subplots(1, 2)
         ax1.plot([0, 1], [0, 1])
@@ -75,12 +75,12 @@ class createPlots():
         ax2.text(0.3, 0.07, str('AUC-ROC = ') + str(round(100*(roc_auc_score(dfTest[target], dfTest['score'])), 3)) + str('%'), transform=ax2.transAxes)
         fig.text(0.5, 0.03, 'FPR', ha='center')
         fig.text(0.05, 0.5, 'TPR', va='center', rotation='vertical')     
-        plt.savefig(path + '/' + nameModel + '/output/metricas/ROC_AUC_train_test_' + name + '.png')
+        plt.savefig(path + '/' + nameProject + '/output/metricas/ROC_AUC_train_test_' + name + '.png')
         plt.close(fig)
         plt.show()
         
         
-    def plotROC_AUC_pred(self, df, target, name, path, nameModel):
+    def plotROC_AUC_pred(self, df, target, name, path, nameProject):
         fpr24ghz, tpr24ghz, thresholds = roc_curve(df[target], df['score'])
         fig = plt.figure(figsize=(5, 5))
         plt.plot([0, 1], [0, 1])
@@ -90,12 +90,12 @@ class createPlots():
         plt.ylabel('TPR', color='#1C2833')
         plt.grid()
         plt.text(0.61, 0.01, str('AUC-ROC = ') + str(round(100*(roc_auc_score(df[target], df['score'])), 3)) + str('%'))
-        plt.savefig(path + '/' + nameModel + '/output/metricas/ROC_AUC_predict_' + name + '.png')
+        plt.savefig(path + '/' + nameProject + '/output/metricas/ROC_AUC_predict_' + name + '.png')
         plt.close(fig)
         plt.show()
 
         
-    def plotFeaturesSelect(self, dfVars, path, nameModel, name):
+    def plotFeaturesSelect(self, dfVars, path, nameProject, name):
         plt.rcdefaults()
         fig, ax = plt.subplots()
         
@@ -110,6 +110,6 @@ class createPlots():
         ax.set_xlabel('Values')
         ax.set_ylabel('FEATURES')
         ax.set_title('Features importances')    
-        fig.savefig(path + '/' + nameModel + '/output/metricas/Features_selection_' + name + '.png')
+        fig.savefig(path + '/' + nameProject + '/output/metricas/Features_selection_' + name + '.png')
         plt.close(fig)
         plt.show()
