@@ -25,7 +25,7 @@ class main():
         self.df = df
         self.target = target
         self.dfPred = pd.DataFrame()
-        self.diccionario = pd.DataFrame()
+        self.diccionarioNA = pd.DataFrame()
         self.path = ""
         self.nameProject = ""
         self.modelToPred = ""
@@ -43,6 +43,7 @@ class main():
         self.parametrosvotClass = {}
         self.parametrosxgb = {}
         self.parametroslgb = {}
+        self.parametrosknn = {}
 
     def createDirectory(self):
         listDir = ['output', 'governance']
@@ -56,7 +57,7 @@ class main():
                 os.makedirs(self.path + '/' + self.nameProject + '/output/' + i)
     
     def inputNAs(self):
-        self.df = tratamiento().inputNA(self.df, self.path, self.nameProject, self.diccionario)
+        self.df = tratamiento().inputNA(self.df, self.path, self.nameProject, self.diccionarioNA)
         
     def dummies(self):
         self.df = tratamiento().createDummies(self.df, self.target, self.path, self.nameProject)    
@@ -88,6 +89,9 @@ class main():
     def modelLightGBMClassifier(self):
         modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLightGBMClassifier(self.parametroslgb)
     
+    def modelKNeighborsClassifier(self):
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelKNeighborsClassifier(self.parametrosknn)
+
     def predict(self):
         predictions().predict(self.dfPred, self.path, self.nameProject, self.modelToPred, self.nameSavePred, self.target, self.Id)
 
