@@ -21,6 +21,7 @@ from main import main
 finalModelComplete = main(df, 'Churn')
 finalModelComplete.path = 'C:/Users/SC250091/Documents/SERGIO/Kaggle/Target binaria/Telco_customer_churn'
 finalModelComplete.nameProject = 'projectChrun'
+finalModelComplete.createDirectory()
 finalModelComplete.test_size = 0.2
 finalModelComplete.nVars = 25
 finalModelComplete.cv = 5

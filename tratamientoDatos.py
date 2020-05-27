@@ -31,10 +31,10 @@ class tratamiento():
                 dfSummaryImput.loc[i,'Variable'] = variables[i]
                 if df[variables[i]].dtype == 'object':        
                     dfSummaryImput.loc[i,'Input'] = naCategoric
-                    dfSummaryImput.loc[i,'Input'] = 'Categorical'
+                    dfSummaryImput.loc[i,'Type'] = 'Categorical'
                 else:
                     dfSummaryImput.loc[i,'Input'] = naNumeric
-                    dfSummaryImput.loc[i,'Input'] = 'Numerical'
+                    dfSummaryImput.loc[i,'Type'] = 'Numerical'
             dfSummaryImput.to_csv(path + '/' + nameProject + '/governance/diccionarioInputNAs.csv', sep=';', index=False)
             
         else:
