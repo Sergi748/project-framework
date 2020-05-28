@@ -16,14 +16,17 @@ from sklearn.feature_selection import SelectFromModel
 
 class SelectVars():
     
-    def __init__(self, df, target, nVars):
+    def __init__(self, df, Id, target, nVars):
         self.df = df
+        self.Id = Id 
         self.target = target
         self.nVars = nVars
     
+    
     def __split(self):
-        return self.df.loc[:, ~self.df.columns.isin([self.target])], self.df.loc[:, self.df.columns == self.target]
+        return self.df.loc[:, ~self.df.columns.isin([self.target, self.Id])], self.df.loc[:, self.df.columns == self.target]
           
+    
     def SelectKBest(self):
         df_x, df_y = SelectVars.__split(self)
         n = df_x.shape[1] if not self.nVars else int(self.nVars)
@@ -33,6 +36,7 @@ class SelectVars():
         varsSelectKBestChi2 = dfSelectKBestChi2.loc[0:n,['Specs']]['Specs'].tolist()
         return self.df.loc[:,varsSelectKBestChi2 + [self.target]]
         
+    
     def SelectFromModel(self, estimator):
         df_x, df_y = SelectVars.__split(self)
         n = df_x.shape[1] if not self.nVars else int(self.nVars)
@@ -43,6 +47,7 @@ class SelectVars():
         dfSelectFromModel = dfSelectFromModel.iloc[(-np.abs(dfSelectFromModel['CoefSelectModel'].values)).argsort()].reset_index(drop=True)
         varsSelectFromModel =  dfSelectFromModel.loc[0:n,['Specs']]['Specs'].tolist()
         return self.df.loc[:,varsSelectFromModel + [self.target]]
+
 
     def SelectVariance(self):
         df_x, df_y = SelectVars.__split(self)
