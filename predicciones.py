@@ -14,10 +14,11 @@ warnings.filterwarnings('ignore')
 # Clases creadas
 from tratamientoDatos import tratamiento
 from plots import createPlots
+from metrics import *
 
 class predictions():
 
-    def predict(self, dfPred, path, nameProject, modelToPred, nameSavePred, target, Id):
+    def predictClassifier(self, dfPred, path, nameProject, modelToPred, nameSavePred, target, Id):
         
         '''Funcion para realizar predicciones'''        
         df1 = dfPred.copy()
@@ -36,16 +37,16 @@ class predictions():
             for var in varsToCreate:
                 df1[var] = 0
     
-        df1 = df1.loc[:,df1.columns.isin(varsTrain.Variables_used.tolist())]
+        df1 = df1.loc[:,varsTrain.Variables_used.tolist()]
         df1['score'] = loaded_model.predict_proba(df1)[::,1]
         df1[Id] = df1Id
         df1[[Id, 'score']].to_csv(path + '/' + nameProject + '/output/predicciones/prediccion_model_' + modelToPred + '_' + nameSavePred + '.csv', sep=';', index=False)
 
-    def plotPredict(self, df, target, nameSavePred, path, nameProject):
+    def plotPredictClassifier(self, df, target, nameSavePred, path, nameProject):
         
         df1 = df.copy()
         df1[target] = df1[target].astype(int)
         dfLiftPred = createPlots().tableLift(df1, 'score', target)
         createPlots().plotROC_AUC_pred(df1, target, nameSavePred, path, nameProject)
         createPlots().plotLift(dfLiftPred, 'predict_' + nameSavePred, path, nameProject)
-        
+        metrics().metricsClassifierPred(df1[['score', target]], target, path, nameProject, nameSavePred)

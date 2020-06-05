@@ -16,7 +16,7 @@ pd.set_option('display.max_rows', None)
 # Clases creadas
 from tratamientoDatos import tratamiento
 from seleccionVariables import SelectVars
-from modelosClasificacion import modelos
+from modelos import modelos
 from predicciones import predictions
 
 class main():
@@ -44,6 +44,8 @@ class main():
         self.parametrosxgb = {}
         self.parametroslgb = {}
         self.parametrosknn = {}
+        self.parametroslinReg = {}
+        self.parametrosxgbReg = {}
 
     def createDirectory(self):
         listDir = ['output', 'governance']
@@ -63,13 +65,13 @@ class main():
         self.df = tratamiento().createDummies(self.df, self.target, self.path, self.nameProject)    
                           
     def SelectKBest(self):
-        self.df = SelectVars(self.df, self.target, self.nVars).SelectKBest()
+        self.df = SelectVars(self.df, self.Id, self.target, self.nVars).SelectKBest()
 
     def SelectFromModel(self):
-        self.df = SelectVars(self.df, self.target, self.nVars).SelectFromModel(self.estimator)
+        self.df = SelectVars(self.df, self.Id, self.target, self.nVars).SelectFromModel(self.estimator)
 
     def SelectVariance(self):
-        self.df = SelectVars(self.df, self.target, self.nVars).SelectVariance()
+        self.df = SelectVars(self.df, self.Id, self.target, self.nVars).SelectVariance()
           
     def modelLogisticRegression(self):
         modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLogisticRegression(self.parametrosLogReg)
@@ -92,9 +94,16 @@ class main():
     def modelKNeighborsClassifier(self):
         modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelKNeighborsClassifier(self.parametrosknn)
 
-    def predict(self):
-        predictions().predict(self.dfPred, self.path, self.nameProject, self.modelToPred, self.nameSavePred, self.target, self.Id)
+    def modelLinearRegression(self):
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLinearRegression(self.parametroslinReg)
+    
+    def modelXGBRegressor(self):
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelXGBRegressor(self.parametrosxgbReg)     
+    
+    def predictClassifier(self):
+        predictions().predictClassifier(self.dfPred, self.path, self.nameProject, self.modelToPred, self.nameSavePred, self.target, self.Id)
 
-    def plotPredict(self):
-        predictions().plotPredict(self.dfPred, self.target, self.nameSavePred, self.path, self.nameProject)
+    def plotPredictClassifier(self):
+        predictions().plotPredictClassifier(self.dfPred, self.target, self.nameSavePred, self.path, self.nameProject)
+        
         
