@@ -72,10 +72,10 @@ class createPlots():
         plt.show()    
         
     
-    def roc_auc_lift_predict(self, dfPredReal, target, path, nameProject, modelToPred, nameSavePred):
+    def roc_auc_lift_predict(self, dfPredReal, target, Id, path, nameProject, modelToPred, nameSavePred):
     
         dfPredScore = pd.read_csv(path + '/' + nameProject + '/output/predicciones/prediccion_model_' + modelToPred + '_' + nameSavePred + '.csv', sep=';')
-        dfPred_real_score = pd.merge(dfPredReal, dfPredScore, on='customerID', how='inner')
+        dfPred_real_score = pd.merge(dfPredReal, dfPredScore, on=Id, how='inner')
         dfPred_real_score['scores_to_0'] = 1 - dfPred_real_score.score
     
         fpr, tpr, threshold = roc_curve(dfPred_real_score[target], dfPred_real_score['score'])

@@ -109,5 +109,5 @@ class main():
         predictions().predictClassifier(self.dfPred, self.path, self.nameProject, self.modelToPred, self.nameSavePred, self.target, self.Id)
 
     def plotPredictClassifier(self):
-        createPlots().roc_auc_lift_predict(self.dfPredReal, self.target, self.path, self.nameProject, self.modelToPred, self.nameSavePred)
+        createPlots().roc_auc_lift_predict(self.dfPredReal, self.target, self.Id, self.path, self.nameProject, self.modelToPred, self.nameSavePred)
         
