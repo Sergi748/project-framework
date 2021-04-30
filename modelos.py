@@ -2,12 +2,17 @@
 """
 Created on Wed Apr 22 09:50:11 2020
 
-@author: sc250091
+@author: Sergio Campos
 """
 
-import pandas as pd
+import sys
+import os
+sys.path.append(os.getcwd())
+
 import pickle
+import joblib
 import warnings
+import pandas as pd
 warnings.filterwarnings('ignore')
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -16,18 +21,18 @@ from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 # from sklearn.ensemble import VotingClassifier
 from plots import createPlots
 from metrics import metrics
 import xgboost as xgb
 import lightgbm as lgb
-from metrics import *
 
 
 class modelos():
     
     '''Clase de modelos'''
-    def __init__(self, df, target, test_size, path, nameProject, cv, score_metric):
+    def __init__(self, df, target, test_size, path, nameProject, cv, score_metric, scaler):
         self.df = df
         self.target = target
         self.test_size = test_size
@@ -35,6 +40,8 @@ class modelos():
         self.nameProject = nameProject
         self.cv = cv 
         self.score_metric = score_metric
+        self.scaler = scaler
+        self.scaler_save = ""
         
         
     def __split(self):
@@ -44,58 +51,26 @@ class modelos():
     def __trainTest(self):
         df_x, df_y = modelos.__split(self)
         # Dividimos el tablon entre las variables dependientes e independiente        
-        return train_test_split(df_x, df_y, test_size=self.test_size, random_state=22)
+        X_train, X_test, y_train, y_test = train_test_split(df_x, df_y, test_size=self.test_size, random_state=22)
+        # Escalamos los datos 
+        if self.scaler == 'StandardScaler':
+            scaler = StandardScaler().fit(X_train)
+        elif self.scaler == 'MinMaxScaler':
+            scaler = MinMaxScaler().fit(X_train)
+        elif (self.scaler != "" ) & (self.scaler not in ['StandardScaler', 'MinMaxScaler']):
+            print('Scaling not available, you can only use StandardScaler and MinMaxScaler functions')
+            sys.exit()
+            
+        if self.scaler != "":
+            X_train_columns = X_train.columns
+            X_train = pd.DataFrame(scaler.transform(X_train), index=X_train.index, columns=X_train_columns)
+            X_test = pd.DataFrame(scaler.transform(X_test), index=X_test.index, columns=X_train_columns)            
+            self.scaler_save = scaler        
+ 
+        return X_train, X_test, y_train, y_test
     
     
-    def __metricsROC(model, dfTr, yTr, dfTs, yTs, target, name, path, nameProject):
-        dfTr=dfTr.copy()
-        dfTs=dfTs.copy()
-
-        # Train
-        dfTr['score'] = model.predict_proba(dfTr)[::,1]
-        dfTr[target] = yTr
-        dfTr = dfTr[['score', target]]
-        dfTr[target] = dfTr[target].astype(int)
-        # Test
-        dfTs['score'] = model.predict_proba(dfTs)[::,1]
-        dfTs[target] = yTs
-        dfTs = dfTs[['score', target]]
-        dfTs[target] = dfTs[target].astype(int)
-        
-        createPlots().plotROC_AUC_train_test(dfTrain=dfTr, dfTest=dfTs, target=target, name=name, path=path, nameProject=nameProject)
-
-    
-    def __metricsLift_old(model, X, y, target, name, path, nameProject):
-        X['score'] = model.predict_proba(X)[::,1]
-        X[target] = y
-        X = X[['score', target]]
-        dfLift = createPlots().tableLift(df=X, score='score', target= target)
-        # for i in [1, 0.1, 0.05]:
-        #     createPlots().plotLift(dfLift, i, name, path=path, nameProject=nameProject)
-        createPlots().plotLift(dfLift, name, path=path, nameProject=nameProject)
-
-
-    def __metricsLift(model, dfTr, yTr, dfTs, yTs, target, name, path, nameProject):
-        dfTr=dfTr.copy()
-        dfTs=dfTs.copy()
-
-        # Train
-        dfTr['score'] = model.predict_proba(dfTr)[::,1]
-        dfTr[target] = yTr
-        dfTr = dfTr[['score', target]]
-        # Test
-        dfTs['score'] = model.predict_proba(dfTs)[::,1]
-        dfTs[target] = yTs
-        dfTs = dfTs[['score', target]]
-        
-        dfLiftTrain = createPlots().tableLift(df=dfTr, score='score', target= target)
-        dfLiftTest = createPlots().tableLift(df=dfTs, score='score', target= target)
-
-        createPlots().plotLift(df=dfLiftTrain, name='Train_' + name, path=path, nameProject=nameProject)
-        createPlots().plotLift(df=dfLiftTest, name='Test_' + name, path=path, nameProject=nameProject)     
-    
-    
-    def __featuresAndPickle(model, target, X, path, nameProject, modelName):
+    def __featuresAndPickle(self, model, target, X, path, nameProject, modelName):
         if modelName == 'LogisticRegression':
             features_importance = pd.DataFrame(data={'Variables': X.columns, 'coef': abs(model.best_estimator_.coef_[0])}, columns=['Variables', 'coef']).sort_values('coef', ascending=False).reset_index(drop=True)
         else:
@@ -105,6 +80,10 @@ class modelos():
         pd.DataFrame(model.cv_results_).to_csv(path + '/' + nameProject + '/output/modelos/gridSearch_' + modelName + '.csv', index=False, sep=';')                
         filename = path + '/' + nameProject + '/output/modelos/model_' + modelName + '.pkl'
         pickle.dump(model, open(filename, 'wb'))
+        if self.scaler != "":
+            scaler_filepath = path + '/' + nameProject +  '/output/modelos/scaler_' + modelName + '.pkl'
+            joblib.dump(self.scaler_save, scaler_filepath)
+
    
         
     def modelLogisticRegression(self, parametrosLogReg):
@@ -112,9 +91,8 @@ class modelos():
         
         model_lr = GridSearchCV(LogisticRegression(), param_grid=parametrosLogReg, cv=self.cv, scoring=self.score_metric).fit(X_train, y_train)
         pd.DataFrame(X_train.columns, columns=['Variables_used']).to_csv(self.path + '/' + self.nameProject + '/governance/varsTrain.csv', sep=';', index=False)
-        modelos.__featuresAndPickle(model=model_lr, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='LogisticRegression')       
-        modelos.__metricsROC(model=model_lr, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='LogisticRegression', path=self.path, nameProject=self.nameProject)
-        modelos.__metricsLift(model=model_lr, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='LogisticRegression', path=self.path, nameProject=self.nameProject)
+        modelos.__featuresAndPickle(self, model=model_lr, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='LogisticRegression')       
+        createPlots().roc_auc_lift(X_test, y_test, model_lr, self.target, 'LogisticRegression', self.path, self.nameProject)
         metrics().metricsClassifier(dfXTr=X_train, dfYTr=y_train, dfXTs=X_test, dfYTs=y_test, target=self.target, model=model_lr, path=self.path, nameProject=self.nameProject, name='LogisticRegression')
         return print('Scores modelo LogisticRegresion \ntrain: ' + str(model_lr.score(X_train, y_train)) + '\ntest: ' + str(model_lr.score(X_test, y_test)))
                    
@@ -124,9 +102,8 @@ class modelos():
         
         model_rf = GridSearchCV(RandomForestClassifier(), param_grid=parametrosRandomForest, cv=self.cv, scoring=self.score_metric).fit(X_train, y_train)
         pd.DataFrame(X_train.columns, columns=['Variables_used']).to_csv(self.path + '/' + self.nameProject + '/governance/varsTrain.csv', sep=';', index=False)
-        modelos.__featuresAndPickle(model=model_rf, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='RandomForest')       
-        modelos.__metricsROC(model=model_rf, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='RandomForest', path=self.path, nameProject=self.nameProject)
-        modelos.__metricsLift(model=model_rf, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='RandomForest', path=self.path, nameProject=self.nameProject)
+        modelos.__featuresAndPickle(self, model=model_rf, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='RandomForest')       
+        createPlots().roc_auc_lift(X_test, y_test, model_rf, self.target, 'RandomForest', self.path, self.nameProject)
         metrics().metricsClassifier(dfXTr=X_train, dfYTr=y_train, dfXTs=X_test, dfYTs=y_test, target=self.target, model=model_rf, path=self.path, nameProject=self.nameProject, name='RandomForest')
         return print('Scores modelo RandomForest \ntrain: ' + str(model_rf.score(X_train, y_train)) + '\ntest: ' + str(model_rf.score(X_test, y_test)))          
     
@@ -136,9 +113,8 @@ class modelos():
 
         model_GradBoosting = GridSearchCV(estimator=GradientBoostingClassifier(), param_grid=parametrosGradBoosting, cv=self.cv, scoring=self.score_metric).fit(X_train, y_train)
         pd.DataFrame(X_train.columns, columns=['Variables_used']).to_csv(self.path + '/' + self.nameProject + '/governance/varsTrain.csv', sep=';', index=False)
-        modelos.__featuresAndPickle(model=model_GradBoosting, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='GradientBoostingClassifier')       
-        modelos.__metricsROC(model=model_GradBoosting, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='GradBoosting', path=self.path, nameProject=self.nameProject)
-        modelos.__metricsLift(model=model_GradBoosting, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='GradBoosting', path=self.path, nameProject=self.nameProject)
+        modelos.__featuresAndPickle(self, model=model_GradBoosting, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='GradientBoostingClassifier')       
+        createPlots().roc_auc_lift(X_test, y_test, model_GradBoosting, self.target, 'GradBoosting', self.path, self.nameProject)
         metrics().metricsClassifier(dfXTr=X_train, dfYTr=y_train, dfXTs=X_test, dfYTs=y_test, target=self.target, model=model_GradBoosting, path=self.path, nameProject=self.nameProject, name='GradBoosting')
         return print('Scores modelo GradientBoostingClassifier \ntrain: ' + str(model_GradBoosting.score(X_train, y_train)) + '\ntest: ' + str(model_GradBoosting.score(X_test, y_test)))
        
@@ -150,9 +126,10 @@ class modelos():
         pd.DataFrame(model_votClass.cv_results_).to_csv(self.path + '/' + self.nameProject + '/output/modelos/gridSearch_VotingClassifier.csv', index=False, sep=';')
         filename = self.path + '/' + self.nameProject + '/output/modelos/model_VotingClassifier.pkl'
         pickle.dump(model_votClass, open(filename, 'wb'))
+        scaler_filepath = self.path + '/' + self.nameProject +  '/output/modelos/scaler_VotingClassifier.pkl'
+        joblib.dump(self.scaler_save, scaler_filepath)
         pd.DataFrame(X_train.columns, columns=['Variables_used']).to_csv(self.path + '/' + self.nameProject + '/governance/varsTrain.csv', sep=';', index=False)
-        modelos.__metricsROC(model=model_votClass, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='VotingClassifier', path=self.path, nameProject=self.nameProject)
-        modelos.__metricsLift(model=model_votClass, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='VotingClassifier', path=self.path, nameProject=self.nameProject)
+        createPlots().roc_auc_lift(X_test, y_test, model_votClass, self.target, 'VotingClassifier', self.path, self.nameProject)
         metrics().metricsClassifier(dfXTr=X_train, dfYTr=y_train, dfXTs=X_test, dfYTs=y_test, target=self.target, model=model_votClass, path=self.path, nameProject=self.nameProject, name='VotingClassifier')
         return print('Scores modelo VotingClassifier \ntrain: ' + str(model_votClass.score(X_train, y_train)) + '\ntest: ' + str(model_votClass.score(X_test, y_test)))
 
@@ -162,9 +139,8 @@ class modelos():
 
         model_xgb = GridSearchCV(estimator=xgb.XGBClassifier(), param_grid=parametrosxgb, cv=self.cv, scoring=self.score_metric).fit(X_train, y_train)
         pd.DataFrame(X_train.columns, columns=['Variables_used']).to_csv(self.path + '/' + self.nameProject + '/governance/varsTrain.csv', sep=';', index=False)
-        modelos.__featuresAndPickle(model=model_xgb, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='XGBClassifier')       
-        modelos.__metricsROC(model=model_xgb, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='XGBClassifier', path=self.path, nameProject=self.nameProject)
-        modelos.__metricsLift(model=model_xgb, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='XGBClassifier', path=self.path, nameProject=self.nameProject)
+        modelos.__featuresAndPickle(self, model=model_xgb, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='XGBClassifier')       
+        createPlots().roc_auc_lift(X_test, y_test, model_xgb, self.target, 'XGBClassifier', self.path, self.nameProject)
         metrics().metricsClassifier(dfXTr=X_train, dfYTr=y_train, dfXTs=X_test, dfYTs=y_test, target=self.target, model=model_xgb, path=self.path, nameProject=self.nameProject, name='XGBClassifier')
         return print('Scores modelo XGBClassifier \ntrain: ' + str(model_xgb.score(X_train, y_train)) + '\ntest: ' + str(model_xgb.score(X_test, y_test)))        
         
@@ -174,9 +150,8 @@ class modelos():
     
         model_lgb = GridSearchCV(estimator=lgb.LGBMClassifier(), param_grid=parametroslgb, cv=self.cv, scoring=self.score_metric).fit(X_train, y_train)
         pd.DataFrame(X_train.columns, columns=['Variables_used']).to_csv(self.path + '/' + self.nameProject + '/governance/varsTrain.csv', sep=';', index=False)
-        modelos.__featuresAndPickle(model=model_lgb, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='LGBMClassifier')       
-        modelos.__metricsROC(model=model_lgb, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='LGBMClassifier', path=self.path, nameProject=self.nameProject)
-        modelos.__metricsLift(model=model_lgb, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='LGBMClassifier', path=self.path, nameProject=self.nameProject)
+        modelos.__featuresAndPickle(self, model=model_lgb, target=self.target, X=X_train, path=self.path, nameProject=self.nameProject, modelName='LGBMClassifier')       
+        createPlots().roc_auc_lift(X_test, y_test, model_lgb, self.target, 'LGBMClassifier', self.path, self.nameProject)
         metrics().metricsClassifier(dfXTr=X_train, dfYTr=y_train, dfXTs=X_test, dfYTs=y_test, target=self.target, model=model_lgb, path=self.path, nameProject=self.nameProject, name='LGBMClassifier')
         return print('Scores modelo LGBMClassifier \ntrain: ' + str(model_lgb.score(X_train, y_train)) + '\ntest: ' + str(model_lgb.score(X_test, y_test)))
      
@@ -189,8 +164,7 @@ class modelos():
         filename = self.path + '/' + self.nameProject + '/output/modelos/model_KnnClassifier.pkl'
         pickle.dump(model_knn, open(filename, 'wb'))
         pd.DataFrame(X_train.columns, columns=['Variables_used']).to_csv(self.path + '/' + self.nameProject + '/governance/varsTrain.csv', sep=';', index=False)
-        modelos.__metricsROC(model=model_knn, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='KnnClassifier', path=self.path, nameProject=self.nameProject)
-        modelos.__metricsLift(model=model_knn, dfTr=X_train, yTr=y_train, dfTs=X_test, yTs=y_test, target=self.target, name='KnnClassifier', path=self.path, nameProject=self.nameProject)
+        createPlots().roc_auc_lift(X_test, y_test, model_knn, self.target, 'KnnClassifier', self.path, self.nameProject)
         metrics().metricsClassifier(dfXTr=X_train, dfYTr=y_train, dfXTs=X_test, dfYTs=y_test, target=self.target, model=model_knn, path=self.path, nameProject=self.nameProject, name='KnnClassifier')
         return print('Scores modelo KnnClassifier \ntrain: ' + str(model_knn.score(X_train, y_train)) + '\ntest: ' + str(model_knn.score(X_test, y_test)))
     

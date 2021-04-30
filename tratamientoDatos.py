@@ -2,7 +2,7 @@
 """
 Created on Wed Apr 22 09:48:12 2020
 
-@author: sc250091
+@author: Sergio Campos
 """
 import pandas as pd
 import warnings

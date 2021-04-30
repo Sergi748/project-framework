@@ -2,7 +2,7 @@
 """
 Created on Wed Apr 22 09:51:49 2020
 
-@author: sc250091
+@author: Sergio Campos
 """
 
 import pandas as pd
@@ -42,11 +42,3 @@ class predictions():
         df1[Id] = df1Id
         df1[[Id, 'score']].to_csv(path + '/' + nameProject + '/output/predicciones/prediccion_model_' + modelToPred + '_' + nameSavePred + '.csv', sep=';', index=False)
 
-    def plotPredictClassifier(self, df, target, nameSavePred, path, nameProject):
-        
-        df1 = df.copy()
-        df1[target] = df1[target].astype(int)
-        dfLiftPred = createPlots().tableLift(df1, 'score', target)
-        createPlots().plotROC_AUC_pred(df1, target, nameSavePred, path, nameProject)
-        createPlots().plotLift(dfLiftPred, 'predict_' + nameSavePred, path, nameProject)
-        metrics().metricsClassifierPred(df1[['score', target]], target, path, nameProject, nameSavePred)

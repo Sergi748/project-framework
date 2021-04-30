@@ -2,10 +2,13 @@
 """
 Created on Thu May 28 13:45:21 2020
 
-@author: sc250091
+@author: Sergio Campos
 """
 
 # Librerias
+import sys
+import os
+sys.path.append(os.getcwd())
 import pandas as pd
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import r2_score

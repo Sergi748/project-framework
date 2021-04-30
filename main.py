@@ -2,11 +2,13 @@
 """
 Created on Sun Apr 19 11:12:46 2020
 
-@author: sc250091
+@author: Sergio Campos
 """
 
 # Librerias
+import sys
 import os
+sys.path.append(os.getcwd())
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
@@ -18,6 +20,7 @@ from tratamientoDatos import tratamiento
 from seleccionVariables import SelectVars
 from modelos import modelos
 from predicciones import predictions
+from plots import createPlots
 
 class main():
     
@@ -25,6 +28,7 @@ class main():
         self.df = df
         self.target = target
         self.dfPred = pd.DataFrame()
+        self.dfPredReal = pd.DataFrame()
         self.diccionarioNA = pd.DataFrame()
         self.path = ""
         self.nameProject = ""
@@ -37,6 +41,7 @@ class main():
         self.estimator = ""
         self.score_metric = ""
         self.estimatorsVotClass = ""
+        self.scaler = ""
         self.parametrosLogReg = {}
         self.parametrosRandomForest = {}
         self.parametrosGradBoosting = {}
@@ -74,25 +79,25 @@ class main():
         self.df = SelectVars(self.df, self.Id, self.target, self.nVars).SelectVariance()
           
     def modelLogisticRegression(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLogisticRegression(self.parametrosLogReg)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric, self.scaler).modelLogisticRegression(self.parametrosLogReg)
     
     def modelRandomForest(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelRandomForest(self.parametrosRandomForest)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric, self.scaler).modelRandomForest(self.parametrosRandomForest)
 
     def modelGradientBoostingClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelGradientBoostingClassifier(self.parametrosGradBoosting)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric, self.scaler).modelGradientBoostingClassifier(self.parametrosGradBoosting)
 
     def modelVotingClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelVotingClassifier(self.estimatorsVotClass, self.parametrosvotClass)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric, self.scaler).modelVotingClassifier(self.estimatorsVotClass, self.parametrosvotClass)
 
     def modelXGBClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelXGBClassifier(self.parametrosxgb)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric, self.scaler).modelXGBClassifier(self.parametrosxgb)
 
     def modelLightGBMClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLightGBMClassifier(self.parametroslgb)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric, self.scaler).modelLightGBMClassifier(self.parametroslgb)
     
     def modelKNeighborsClassifier(self):
-        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelKNeighborsClassifier(self.parametrosknn)
+        modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric, self.scaler).modelKNeighborsClassifier(self.parametrosknn)
 
     def modelLinearRegression(self):
         modelos(self.df, self.target, self.test_size, self.path, self.nameProject, self.cv, self.score_metric).modelLinearRegression(self.parametroslinReg)
@@ -104,6 +109,5 @@ class main():
         predictions().predictClassifier(self.dfPred, self.path, self.nameProject, self.modelToPred, self.nameSavePred, self.target, self.Id)
 
     def plotPredictClassifier(self):
-        predictions().plotPredictClassifier(self.dfPred, self.target, self.nameSavePred, self.path, self.nameProject)
-        
+        createPlots().roc_auc_lift_predict(self.dfPredReal, self.target, self.path, self.nameProject, self.modelToPred, self.nameSavePred)
         
