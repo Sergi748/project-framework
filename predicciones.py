@@ -15,8 +15,6 @@ import joblib
 
 # Clases creadas
 from tratamientoDatos import tratamiento
-from plots import createPlots
-from metrics import *
 
 class predictions():
 
