@@ -10,6 +10,8 @@ import numpy as np
 import pickle
 import warnings
 warnings.filterwarnings('ignore')
+import os
+import joblib
 
 # Clases creadas
 from tratamientoDatos import tratamiento
@@ -26,7 +28,7 @@ class predictions():
         varsTrain = pd.read_csv(path + '/' + nameProject + '/governance/varsTrain.csv', sep=';')
         fileName = path + '/' + nameProject + '/output/modelos/model_' + modelToPred + '.pkl'
         loaded_model = pickle.load(open(fileName, 'rb'))
-        
+    
         '''Imputamos los NA´s, creamos las dummies correspondientes y seleccionamos las variables del train'''
         df1 = tratamiento().inputNAPred(df1, path, nameProject)
         df1 = tratamiento().createDummiesPred(df1, target, Id)
@@ -37,7 +39,13 @@ class predictions():
             for var in varsToCreate:
                 df1[var] = 0
     
+        pathScaler = path + '/' + nameProject + '/output/modelos/scaler_' + modelToPred + '.pkl'
         df1 = df1.loc[:,varsTrain.Variables_used.tolist()]
+        if os.path.exists(pathScaler):
+            scaler = joblib.load(pathScaler)
+            df1_columns = df1.columns
+            df1 = pd.DataFrame(scaler.transform(df1), index=df1.index, columns=df1_columns)
+
         df1['score'] = loaded_model.predict_proba(df1)[::,1]
         df1[Id] = df1Id
         df1[[Id, 'score']].to_csv(path + '/' + nameProject + '/output/predicciones/prediccion_model_' + modelToPred + '_' + nameSavePred + '.csv', sep=';', index=False)
